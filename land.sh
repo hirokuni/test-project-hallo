@@ -1,0 +1,1 @@
+adb shell am broadcast -a com.test.k.landing_takeoff
