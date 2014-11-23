@@ -29,40 +29,42 @@ public class MyService extends Service {
 	AcceptThread thread;
 	PowerManager.WakeLock wakelock;
 	private boolean DEBUG = true;
+	private boolean SEN_DEBUG = false;
 	private Handler handler = new Handler();
 	private boolean mIsRelease = false;
 
-	private BroadcastReceiver bcr = new BroadcastReceiver(){
+	private BroadcastReceiver bcr = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent == null)
 				return;
 
-			if (intent.getAction().equals("com.sony.test.haro.led")){
+			if (intent.getAction().equals("com.sony.test.haro.led")) {
 				String first = intent.getExtras().getString("1st");
 				String second = intent.getExtras().getString("2nd");
 				int third = intent.getExtras().getInt("3rd");
 				int fourth = intent.getExtras().getInt("4th");
-				int fifth = intent.getExtras().getInt("5th");				
-				
-				StringBuffer sb = new StringBuffer(first + ":" + second + ":" + third + ":" + fourth + ":" + fifth + "\n");
-				
-				String cmd =  sb.toString();
+				int fifth = intent.getExtras().getInt("5th");
+
+				StringBuffer sb = new StringBuffer(first + ":" + second + ":"
+						+ third + ":" + fourth + ":" + fifth + "\n");
+
+				String cmd = sb.toString();
 				byte[] cmd_data = cmd.getBytes();
-				
-				for (int i = 0; i < cmd_data.length; i++){
-					Log.i(TAG, ""+cmd_data[i]);
+
+				for (int i = 0; i < cmd_data.length; i++) {
+					Log.i(TAG, "" + cmd_data[i]);
 				}
-				
+
 				Log.i(TAG, "cmd : " + cmd);
 				if (thread != null)
 					thread.out(cmd);
 			}
 		}
-		
+
 	};
-	
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
@@ -81,8 +83,7 @@ public class MyService extends Service {
 		wakelock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
 				| PowerManager.ON_AFTER_RELEASE, "Your App Tag");
 		wakelock.acquire();
-		
-		
+
 		IntentFilter ifilter = new IntentFilter();
 		ifilter.addAction("com.sony.test.haro.led");
 		registerReceiver(bcr, ifilter);
@@ -93,7 +94,7 @@ public class MyService extends Service {
 		Log.i(TAG, "onDestroy()");
 		super.onDestroy();
 
-		if (thread != null){
+		if (thread != null) {
 			thread.release();
 			thread.cancel();
 		}
@@ -104,7 +105,7 @@ public class MyService extends Service {
 		wakelock = null;
 
 		mIsRelease = true;
-		
+
 		unregisterReceiver(bcr);
 	}
 
@@ -115,8 +116,9 @@ public class MyService extends Service {
 		private droneCtrl mDctrl;
 		private boolean isCmdSet = false;
 		private String OutCmd = null;
+
 		public AcceptThread() {
-			Log.i(TAG,"thread create");
+			Log.i(TAG, "thread create");
 			// Use a temporary object that is later assigned to mmServerSocket,
 			// because mmServerSocket is final
 			BluetoothServerSocket tmp = null;
@@ -130,15 +132,15 @@ public class MyService extends Service {
 			}
 			if (mDctrl == null)
 				mDctrl = new droneCtrl(MyService.this);
-			
+
 			if (mDctrl == null)
-				Log.w(TAG,"Dctrl is null");
-			
+				Log.w(TAG, "Dctrl is null");
+
 			mmServerSocket = tmp;
 			sdc = new SensorDataComposer(mDctrl);
-			
+
 		}
-		
+
 		public void out(String cmd) {
 			if (cmd == null)
 				return;
@@ -147,21 +149,23 @@ public class MyService extends Service {
 			Log.i(TAG, "out cmd : " + cmd);
 		}
 
-		public void release(){
-			Log.i(TAG,"mDctrl is released");
+		public void release() {
+			Log.i(TAG, "mDctrl is released");
 			if (mDctrl != null)
 				mDctrl.release();
 			mDctrl = null;
 		}
-		private void showToast(final String str){
+
+		private void showToast(final String str) {
 			handler.post(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(MyService.this, str, Toast.LENGTH_LONG).show();
+					Toast.makeText(MyService.this, str, Toast.LENGTH_LONG)
+							.show();
 				}
 			});
 		}
-		
+
 		public void run() {
 			socket = null;
 			// Keep listening until exception occurs or a socket is returned
@@ -171,7 +175,7 @@ public class MyService extends Service {
 					socket = mmServerSocket.accept();
 					Log.d(TAG, "accept");
 					showToast("BT socket accept");
-					
+
 				} catch (IOException e) {
 					Log.w(TAG, e.toString());
 					break;
@@ -192,16 +196,14 @@ public class MyService extends Service {
 			}
 			showToast("BT conn is closed");
 			sdc.release();
-			
-		
-			
+
+			showToast("service going off");
 			MyService.this.stopSelf();
 
 		}
 
 		private void connect(BluetoothSocket socket) {
-			
-			
+
 			// DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
 			try {
@@ -214,17 +216,18 @@ public class MyService extends Service {
 				while (true) {
 					byte[] buffer = new byte[1024];
 					int bytes = in.read(buffer);
-					
+
 					String cmd_in = new String(buffer, 0, bytes);
-					
-					Log.d(TAG, "in : " + cmd_in);
+					if (SEN_DEBUG)
+						Log.d(TAG, "in : " + cmd_in);
+
 					sdc.addData(cmd_in);
-					
-					if (isCmdSet){
+
+					if (isCmdSet) {
 						out.write(OutCmd.getBytes());
 						isCmdSet = false;
 					}
-						// out.write((df.format(new Date()) + ": " + new String
+					// out.write((df.format(new Date()) + ": " + new String
 					// (buffer, 0, bytes) + "\r\n").getBytes());
 					if (mIsRelease == true) {
 						// out.write(("Bye!\r\n").getBytes());

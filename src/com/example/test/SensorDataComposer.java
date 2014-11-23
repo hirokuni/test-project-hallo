@@ -24,6 +24,7 @@ public class SensorDataComposer {
 	private boolean mIsRelease = false;
 	private Object mLock = new Object();
 	private Object mNotifyLock = new Object();
+	private boolean SEN_DEBUG = false;
 	private Thread mNotifyThread = new Thread(new Runnable() {
 
 		@Override
@@ -80,11 +81,11 @@ public class SensorDataComposer {
 	});
 
 	public SensorDataComposer(SensorEventListener sel) {
-		Log.w(TAG,"create");
+		Log.w(TAG, "create");
 		mNotifyThread.start();
 		mSensorEventListener = sel;
 		if (sel == null)
-			Log.w(TAG,"listener is null");
+			Log.w(TAG, "listener is null");
 	}
 
 	public void release() {
@@ -109,7 +110,8 @@ public class SensorDataComposer {
 				mSbf.append(ch);
 		}
 
-		Log.i(TAG, "mSbf : " + mSbf.toString() + " <<<");
+		if (SEN_DEBUG)
+			Log.i(TAG, "mSbf : " + mSbf.toString() + " <<<");
 		while (mSbf.length() > 4) {
 
 			String type = mSbf.substring(0, 4);

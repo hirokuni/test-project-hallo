@@ -13,19 +13,36 @@ import android.widget.Toast;
 
 public class droneCtrl implements SensorEventListener {
 	// time3 : 3 seconds
-	private String[] sequence01 = {
+	private String[] sequence02 = {
 			// "speeddown","time1",
-			//"up", "time2", 
-			"go", "time4", 
-			"left", "time2", 
-			"left", "time2",
-			"left", "time20",
-			// "go", "time4",
-			//"down", "time2",
-			//"landing"
+			// "up", "time2",
+			"go", "time8", "left", "time2", "left", "time2", "left", "time20",
+	// "go", "time4",
+	// "down", "time2",
+	// "landing"
 	// "go", "time1",
 	};
 
+	
+	private String[] sequence01 = {
+			// "speeddown","time1",
+			// "up", "time2",
+			"go", "time2",
+			"up","time2",
+			"left", "time2",
+			"left", "time2",
+			"left", "time2",
+			"down","time2",
+			"left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2",
+			"left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2",
+			"left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2","left", "time2",
+	// "go", "time4",
+	// "down", "time2",
+	// "landing"
+	// "go", "time1",
+	};
+	
+	
 	// private String[] sequence01 = {
 	// "go", "time1",
 	// "speeddown","time1",
@@ -49,14 +66,16 @@ public class droneCtrl implements SensorEventListener {
 	// "landing" };
 
 	private boolean DEBUG = true;
+	private boolean SEN_DEBUG = false;
 	private final static String TAG = "droneCtrl";
 	private Context mContext;
 	private ctrlHandler mCtrlHandler;
 	private HandlerThread handlerThread = new HandlerThread("other");
 	private boolean isRelease = false;
-	private boolean isSequecneStop = false;
+	private boolean SequecneMustStop = false;
 	private SequenceThread mSequenceThread;
 	private Handler handler = new Handler();
+	private boolean isStarting = false;
 
 	private class SequenceThread extends Thread {
 		private String[] exe;
@@ -68,10 +87,24 @@ public class droneCtrl implements SensorEventListener {
 		private SequenceThread() {
 		}
 
+		private void mywait(int msec) {
+
+			try {
+				Thread.sleep(msec);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		}
+
 		@Override
 		public void run() {
 			init();
-			isSequecneStop = false;
+			SequecneMustStop = false;
+			Log.i(TAG, "Ready....");
+			mywait(2000);
+			Log.i(TAG, "Drone START");
+			isStarting = true;
 			for (int i = 0; i < exe.length; i++) {
 				if ("go".equals(exe[i])) {
 					go();
@@ -110,13 +143,14 @@ public class droneCtrl implements SensorEventListener {
 					}
 
 				}
-				if (isRelease || isSequecneStop)
+				if (isRelease || SequecneMustStop)
 					break;
-
 			}
-
 			end();
+			mywait(5000);//must be "before isStarting = false;"
 			mSequenceThread = null;
+			isStarting = false;
+			Log.i(TAG, "Drone STOP");
 		}
 	};
 
@@ -200,8 +234,13 @@ public class droneCtrl implements SensorEventListener {
 		mCtrlHandler.sendMessage(msg);
 	}
 
-	private BroadcastReceiver bcr = new BroadcastReceiver() {
+	private void startSequence() {
+		Log.i(TAG, "startSequence");
+		Intent intent = new Intent("com.sony.test.haro.start");
+		mContext.sendBroadcast(intent);
+	}
 
+	private BroadcastReceiver bcr = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent == null)
@@ -211,12 +250,14 @@ public class droneCtrl implements SensorEventListener {
 				if (mSequenceThread == null) {
 					mSequenceThread = new SequenceThread(sequence01);
 					mSequenceThread.start();
+					Log.i(TAG, "sequence start");
+					showToast("Sequence Start !!!!!!!!!!!!!!!!!!!!!");
 				} else {
 					Log.w(TAG, "on sequencing");
 					handler.post(new Runnable() {
 						@Override
 						public void run() {
-							Toast.makeText(mContext, "Sequence ongoing",
+							Toast.makeText(mContext, "Sequence can't start. Already ongoing",
 									Toast.LENGTH_LONG).show();
 						}
 					});
@@ -263,8 +304,16 @@ public class droneCtrl implements SensorEventListener {
 
 	private droneCtrl() {
 	}
-
+	private void interruptSequenceThread(){
+		if(mSequenceThread != null){
+			if(mSequenceThread.isAlive())
+				if(mSequenceThread.isInterrupted())
+					mSequenceThread.interrupt();
+		}
+	}
 	public void release() {
+		interruptSequenceThread();
+		
 		if (bcr != null & mContext != null)
 			mContext.unregisterReceiver(bcr);
 		bcr = null;
@@ -274,51 +323,99 @@ public class droneCtrl implements SensorEventListener {
 
 		isRelease = true;
 
-		isSequecneStop = true;
+		SequecneMustStop = true;
 	}
 
 	@Override
 	public void onGroChanged(int x, int y, int z) {
-		if (DEBUG)
+		if (SEN_DEBUG)
 			Log.i(TAG, "onGroChanged : x, y, z = " + x + ", " + y + ", " + z);
 
+		// if (y > 800 || z > 800)
+		// if(SequecneMustStop)
+		// startSequence();
 	}
 
+	private boolean AccDown = false;
+	private int AccCnt = 0;
+
+	public void showToast(final String str){
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				Toast.makeText(mContext, str,
+						Toast.LENGTH_LONG).show();
+			}
+		});
+	}
+	
 	@Override
 	public void onAccChanged(int x, int y, int z) {
-		if (DEBUG)
+		if (SEN_DEBUG)
 			Log.i(TAG, "onAccChanged : x, y, z = " + x + ", " + y + ", " + z);
 
+		if (AccDown == true)
+			AccCnt++;
+		
+		if (AccDown == false)
+			if (x < -900) {
+				Log.i(TAG, "acc > -900");
+				AccDown = true;
+			}
+
+		if (AccDown = true)
+			if (x > 0) {
+				if (isStarting == false) {
+					startSequence();
+					Log.i(TAG,"Detect Acc Start timing!!!");
+					AccRelease();
+				}		
+			}
+		
+		if (AccCnt > 30) {
+			AccRelease();
+			Log.i(TAG,"AccRelease");
+		}
 	}
 
+	private void AccRelease(){
+		AccDown = false;
+		AccCnt = 0;
+		
+	}
+	
 	@Override
 	public void onMagChanged(int x, int y, int z) {
-		if (DEBUG)
+		if (SEN_DEBUG)
 			Log.i(TAG, "onMagChanged : x, y, z = " + x + ", " + y + ", " + z);
 
 	}
 
 	boolean isSpeedDown = false;
 
+	
+	
 	@Override
 	public void onDstChanged(int data) {
-		if (DEBUG)
+		if (SEN_DEBUG)
 			Log.i(TAG, "onDstChanged : dst = " + data);
 
 		if (data < 60) {
-			if (isSpeedDown == false) {
-				speed_down();
-			}
+			// if (isSpeedDown == false) {
+			// speed_down();
+			// }
 		} else {
-			if (isSpeedDown == true) {
-				speed_up();
-			}
+			// if (isSpeedDown == true) {
+			// speed_up();
+			// }
 		}
 
-		if (data < 30) {
-			if (isSequecneStop == false) {
-				Log.i(TAG, "takeoff");
-				isSequecneStop = true;
+		if (data < 25) {
+			if (isStarting == true) {
+				Log.i(TAG, "dst < 40");
+				Log.i(TAG, "landing!!");
+				SequecneMustStop = true;
+				interruptSequenceThread(); 
 				landing_takeoff();
 			}
 		}
@@ -541,6 +638,11 @@ public class droneCtrl implements SensorEventListener {
 				// intent.putExtra(R_X, R_DEFAULT_X);// 1400
 				// intent.putExtra(R_Y, R_DEFAULT_Y);// 600
 				// mContext.sendBroadcast(intent);
+
+				Log.i(TAG, "STOP");
+				Intent intent = new Intent("com.test.sensor");
+				intent.putExtra("x", 0);
+				mContext.sendBroadcast(intent);
 			}
 				break;
 			default:
