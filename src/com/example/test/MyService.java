@@ -50,6 +50,10 @@ public class MyService extends Service {
 				StringBuffer sb = new StringBuffer(first + ":" + second + ":"
 						+ third + ":" + fourth + ":" + fifth + "\n");
 
+				//"led:m:1:2:2" //green
+				//"led:m:2:2:1" //red
+				
+				
 				String cmd = sb.toString();
 				byte[] cmd_data = cmd.getBytes();
 
@@ -169,6 +173,7 @@ public class MyService extends Service {
 		public void run() {
 			socket = null;
 			// Keep listening until exception occurs or a socket is returned
+			
 			while (true) {
 				try {
 					Log.d(TAG, "waiting for accept");
@@ -194,6 +199,8 @@ public class MyService extends Service {
 					break;
 				}
 			}
+			
+			
 			showToast("BT conn is closed");
 			sdc.release();
 
