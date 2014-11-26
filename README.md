@@ -9,47 +9,38 @@ This project is for "project Haro" for Roboto no kai. Please refer to the sample
 
 
 
-class test implements SensorEventListener {
-    
-SensorDataComposer sdc;
+package com.example.test;
 
-public void test() {
+public class test implements SensorEventListener {
+    SensorDataComposer sdc;
 
-sdc = new SensorDataComposer(this);
+    public test() {
+        sdc = new SensorDataComposer(this);
+    }
 
-}
+    // input sensor data
+    public void addData(String data) {
+        sdc.addData(data);
+    }
 
-//input sensor data
+    public void onGroChanged(int x, int y, int z) {
+        // TODO Auto-generated method stub
 
-public void addData(String data) {
+    }
 
-   sdc.addData(data);
-}
+    public void onAccChanged(int x, int y, int z) {
+        // TODO Auto-generated method stub
 
-//each call back for Gro, Acc, Mag, Dst.
+    }
 
-@Override
+    public void onMagChanged(int x, int y, int z) {
+        // TODO Auto-generated method stub
 
-public void onGroChanged(int x, int y, int z) {
+    }
 
-}
+    public void onDstChanged(int data) {
+        // TODO Auto-generated method stub
 
-@Override
-
-public void onAccChanged(int x, int y, int z) {
-
-}
-
-@Override
-
-public void onMagChanged(int x, int y, int z) {
-
-}
-
-@Override
-
-public void onDstChanged(int data) {
-
-}
+    }
 
 }
