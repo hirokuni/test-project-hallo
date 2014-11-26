@@ -8,6 +8,9 @@ This project is for "project Haro" for Roboto no kai.
 * How to get sensor data.
 
 
+
+
+
 class test implements SensorEventListener {
     
 SensorDataComposer sdc;
