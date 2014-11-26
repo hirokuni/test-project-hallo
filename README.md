@@ -10,11 +10,11 @@ This project is for "project Haro" for Roboto no kai.
 
 class test implements SensorEventListener {
     
-    SensorDataComposer sdc;
+SensorDataComposer sdc;
 
 public void test() {
 
-    sdc = new SensorDataComposer(this);
+sdc = new SensorDataComposer(this);
 
 }
 
