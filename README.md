@@ -3,9 +3,7 @@ test
 
 
 
-This project is for "project Haro" for Roboto no kai.
-
-* How to get sensor data.
+This project is for "project Haro" for Roboto no kai. Please refer to the sample code about how to get sensor data.
 
 
 
