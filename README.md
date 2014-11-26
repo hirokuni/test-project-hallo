@@ -7,8 +7,6 @@ This project is for "project Haro" for Roboto no kai. Please refer to the sample
 
 
 
-
-
 package com.example.test;
 
 public class test implements SensorEventListener {
